@@ -1,5 +1,5 @@
 // 인터넷이 있으면 새 버전을 받고, 없으면 저장해 둔 파일로 동작
-const CACHE = 'kuji-v1';
+const CACHE = 'kuji-v2';
 const FILES = ['./', 'index.html', 'manifest.json', 'logo.webp', 'ticket.webp', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

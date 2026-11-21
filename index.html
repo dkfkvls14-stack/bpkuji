@@ -73,6 +73,30 @@ html,body{margin:0;height:100%;background:var(--purple);color:var(--white);
 .confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:11;pointer-events:none;animation:fall linear forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 
+.top{opacity:1}
+#storeTag{opacity:.75}
+.topBtns{display:flex;align-items:center;gap:8px}
+.pill{border:0;border-radius:99px;padding:10px 16px;font-family:inherit;font-weight:800;font-size:clamp(14px,1.8vh,18px);
+  background:#fff;color:var(--purple);box-shadow:0 4px 0 var(--purple-dark)}
+#secret{opacity:.5}
+
+/* 손님용 현황판·확률 */
+.view{background:var(--cream);color:var(--ink);border-radius:24px;padding:20px;width:min(96vw,820px);max-height:90vh;overflow:auto;box-shadow:0 0 0 6px #fff}
+.view h3{margin:0 0 4px;text-align:center;font-size:clamp(22px,3vh,30px)}
+.view .sub{text-align:center;color:#8a6fa3;margin-bottom:14px;font-weight:700}
+.bRow{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:10px 0;border-top:2px dashed var(--pink-soft)}
+.bRow .badge{margin-top:2px}
+.bTitle{font-weight:800;margin-bottom:6px}
+.cells{display:flex;flex-wrap:wrap;gap:6px}
+.cell{width:clamp(34px,4.4vh,44px);height:clamp(34px,4.4vh,44px);border-radius:10px;border:2px solid var(--pink-soft);background:#fff;
+  display:grid;place-items:center;font-size:12px;font-weight:800;color:#c9b3dc}
+.cell.done{background:var(--pink);border-color:var(--pink-dark);color:#fff;font-size:11px}
+.oRow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:8px 0}
+.bar{height:18px;border-radius:99px;background:#efe3f7;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--pink);border-radius:99px}
+.pct{font-weight:900;font-size:clamp(18px,2.4vh,24px);color:var(--pink-dark);min-width:84px;text-align:right}
+.view .close{display:block;margin:16px auto 0;border:0;border-radius:99px;padding:14px 40px;font-family:inherit;font-weight:800;font-size:20px;background:var(--purple);color:#fff}
+
 /* 직원 화면 */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
 .modal.on{display:flex}
@@ -92,7 +116,8 @@ html,body{margin:0;height:100%;background:var(--purple);color:var(--white);
 </head>
 <body>
 <div id="app">
-  <div class="top"><span id="storeTag">1호점</span><span id="secret" style="padding:10px 4px">●</span></div>
+  <div class="top"><span id="storeTag">1호점</span>
+    <span class="topBtns"><button class="pill" id="boardBtn">📋 현황판</button><button class="pill" id="oddsBtn">🎲 확률보기</button><span id="secret" style="padding:10px 4px">●</span></span></div>
   <img id="logo" src="logo.webp" alt="부평 셜록홈즈">
   <div class="board">
     <h2>🔍 셜록홈즈 쿠지 상품</h2>
@@ -110,6 +135,19 @@ html,body{margin:0;height:100%;background:var(--purple);color:var(--white);
   </div>
   <button id="doneBtn">직원 확인 완료</button>
 </div>
+
+<div class="modal" id="boardModal"><div class="view">
+  <h3>📋 쿠지 현황판</h3><div class="sub" id="boardSub"></div>
+  <div id="boardBody"></div>
+  <button class="close" data-close="boardModal">닫기</button>
+</div></div>
+
+<div class="modal" id="oddsModal"><div class="view">
+  <h3>🎲 지금 당첨 확률</h3><div class="sub" id="oddsSub"></div>
+  <div id="oddsBody"></div>
+  <p class="sub" style="font-size:14px;margin:10px 0 0">남은 쿠지 수로 계산해요. 한 장 뽑힐 때마다 바뀌어요.</p>
+  <button class="close" data-close="oddsModal">닫기</button>
+</div></div>
 
 <div class="modal" id="pinModal"><div class="sheet">
   <h3>직원 확인</h3>
@@ -213,6 +251,30 @@ function confetti(){
     document.body.appendChild(c); setTimeout(()=>c.remove(), 5000);
   }
 }
+
+// 현황판: 등급별로 뽑힌 칸 표시 (종이 회수 보드처럼)
+$('boardBtn').onclick = () => {
+  const t = total(), all = PRIZES.reduce((s,p)=>s+(data.init[p.g]||0),0);
+  $('boardSub').textContent = `부평 ${shop}호점 · ${all-t}장 뽑힘 / 남은 ${t}장`;
+  $('boardBody').innerHTML = PRIZES.map(p=>{
+    const i = data.init[p.g]||0, l = Math.min(data.left[p.g]||0, i), used = i-l;
+    const cells = Array.from({length:i},(_,k)=>k<used?`<div class="cell done">뽑힘</div>`:`<div class="cell">${k+1}</div>`).join('');
+    return `<div class="bRow g-${p.g}"><div class="badge">${p.g}</div><div><div class="bTitle">${p.g}상 · ${p.name} <span style="color:var(--pink-dark)">(${l?`남은 ${l}`:'소진'} / ${i})</span></div><div class="cells">${cells}</div></div></div>`;
+  }).join('');
+  $('boardModal').classList.add('on');
+};
+// 확률보기: 남은 수량 ÷ 전체 남은 수
+$('oddsBtn').onclick = () => {
+  const t = total();
+  $('oddsSub').textContent = `부평 ${shop}호점 · 남은 쿠지 ${t}장`;
+  $('oddsBody').innerHTML = PRIZES.map(p=>{
+    const l = data.left[p.g]||0, pc = t ? l/t*100 : 0;
+    const txt = !l ? '소진' : (pc<10 ? pc.toFixed(1) : pc.toFixed(0))+'%';
+    return `<div class="oRow g-${p.g}"><div class="badge">${p.g}</div><div><div class="bTitle">${p.g}상 · ${p.name}</div><div class="bar"><i style="width:${pc}%"></i></div></div><div class="pct">${txt}</div></div>`;
+  }).join('');
+  $('oddsModal').classList.add('on');
+};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).classList.remove('on'));
 
 // 숨은 직원 메뉴: ● 5번
 let taps = [];
