@@ -1,0 +1,14 @@
+{
+  "name": "부평 셜록홈즈 쿠지",
+  "short_name": "셜록 쿠지",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#6f13cf",
+  "theme_color": "#6f13cf",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

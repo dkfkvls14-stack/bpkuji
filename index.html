@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>셜록홈즈 쿠지</title>
+<meta name="theme-color" content="#6f13cf">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="셜록 쿠지">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --purple:#6f13cf; --purple-dark:#4e0b97; --purple-soft:#8a3ee0;
+  --pink:#ff5fa2; --pink-dark:#e0337f; --pink-soft:#ffd1e6;
+  --cream:#fff8ef; --gold:#ffcf3f; --ink:#3b1659; --white:#fff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--purple);color:var(--white);
+  font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  -webkit-user-select:none;user-select:none;overflow:hidden;touch-action:manipulation}
+#app{height:100%;display:flex;flex-direction:column;align-items:center;padding:max(16px,env(safe-area-inset-top)) 20px 20px;gap:2vh}
+.top{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:14px;opacity:.75}
+#storeTag{padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.12)}
+#logo{width:min(62vw,560px);max-height:24vh;min-height:0;flex-shrink:1;object-fit:contain;filter:drop-shadow(0 6px 0 rgba(0,0,0,.15))}
+.board{width:min(94vw,820px);background:var(--cream);color:var(--ink);border-radius:28px;padding:18px;
+  box-shadow:0 0 0 6px #fff,0 10px 0 6px var(--purple-dark)}
+.board h2{margin:0 0 12px;text-align:center;font-size:clamp(18px,2.6vh,26px)}
+.prizes{display:grid;grid-template-columns:1fr;gap:8px}
+.prize{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:clamp(6px,1vh,10px) 14px;border:3px solid var(--pink-soft)}
+.prize.out{opacity:.4;filter:grayscale(1)}
+.badge{width:clamp(40px,5.5vh,56px);height:clamp(40px,5.5vh,56px);border-radius:14px;display:grid;place-items:center;
+  font-weight:900;font-size:clamp(22px,3.2vh,30px);color:#fff;background:var(--pink);box-shadow:inset 0 -4px 0 rgba(0,0,0,.15)}
+.g-A .badge{background:linear-gradient(135deg,#ffcf3f,#ff9f1c)}
+.g-B .badge{background:var(--pink-dark)}
+.g-C .badge{background:var(--purple-soft)}
+.g-D .badge{background:#38b6ff}
+.g-F .badge{background:#7ccf6b}
+.pname{font-weight:800;font-size:clamp(16px,2.3vh,22px)}
+.left{font-weight:900;font-size:clamp(16px,2.3vh,22px);color:var(--pink-dark);white-space:nowrap}
+.left small{color:#9a7fb0;font-weight:700}
+.total{margin-top:12px;text-align:center;font-weight:800;font-size:clamp(16px,2.2vh,20px)}
+#drawBtn{margin-top:auto;width:min(90vw,640px);padding:clamp(18px,3vh,28px);border:0;border-radius:99px;
+  font-family:inherit;font-weight:900;font-size:clamp(26px,4vh,40px);line-height:1;color:#fff;flex-shrink:0;margin-bottom:10px;background:var(--pink);
+  box-shadow:0 0 0 6px #fff,0 10px 0 6px var(--pink-dark);cursor:pointer;transition:transform .1s}
+#drawBtn:active{transform:translateY(6px);box-shadow:0 0 0 6px #fff,0 4px 0 6px var(--pink-dark)}
+#drawBtn:disabled{background:#9d86b5;box-shadow:0 0 0 6px #fff,0 10px 0 6px #6e5a85}
+
+/* 뽑기 화면 */
+.overlay{position:fixed;inset:0;background:rgba(40,5,80,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:4vh;z-index:10}
+.overlay.on{display:flex}
+.hint{font-size:clamp(20px,3vh,30px);font-weight:800;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.4}}
+.stage{position:relative;width:min(86vw,640px);aspect-ratio:5/3}
+.result{position:absolute;inset:0;border-radius:22px;background:var(--cream);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh;
+  box-shadow:0 0 0 6px #fff}
+.result .big{font-size:clamp(70px,13vh,130px);font-weight:900;line-height:1;color:var(--pink-dark)}
+.result .rname{font-size:clamp(20px,3vh,32px);font-weight:800;text-align:center;padding:0 12px}
+.ticket{position:absolute;inset:0;cursor:pointer}
+.ticket .half{position:absolute;inset:0;background:url(ticket.webp) center/cover;border-radius:22px;box-shadow:0 0 0 6px #fff;transition:transform .9s cubic-bezier(.5,-.2,.6,1),opacity .9s}
+.ticket .h1{clip-path:polygon(0 0,100% 0,100% 50%,0 54%)}
+.ticket .h2{clip-path:polygon(0 54%,100% 50%,100% 100%,0 100%)}
+.ticket.shake{animation:shake .4s}
+@keyframes shake{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+.ticket.torn .h1{transform:translate(-8%,-120%) rotate(-14deg);opacity:0}
+.ticket.torn .h2{transform:translate(8%,120%) rotate(10deg);opacity:0}
+.ticket.torn{pointer-events:none}
+#doneBtn{visibility:hidden;padding:18px 40px;border:0;border-radius:99px;font-family:inherit;font-weight:800;font-size:clamp(20px,2.8vh,28px);background:#fff;color:var(--purple)}
+#doneBtn.on{visibility:visible}
+.confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:11;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+/* 직원 화면 */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:20;padding:16px}
+.modal.on{display:flex}
+.sheet{background:#fff;color:#222;border-radius:20px;padding:20px;width:min(96vw,640px);max-height:92vh;overflow:auto;-webkit-user-select:text;user-select:text}
+.sheet h3{margin:0 0 12px}
+.sheet label{display:block;margin:10px 0 4px;font-weight:700}
+.sheet input,.sheet select{font:inherit;font-size:18px;padding:8px 10px;border:2px solid #ddd;border-radius:10px;width:100%}
+.row{display:grid;grid-template-columns:40px 1fr 80px 80px;gap:8px;align-items:center;margin:6px 0}
+.row input{padding:6px 8px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btns button{font:inherit;font-weight:700;padding:10px 14px;border-radius:10px;border:0;background:#eee;color:#222}
+.btns .main{background:var(--purple);color:#fff}
+.btns .danger{background:#ffe1e1;color:#c00}
+.log{font-size:14px;max-height:200px;overflow:auto;background:#f6f6f6;border-radius:10px;padding:8px;margin-top:8px}
+.muted{color:#888;font-size:13px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top"><span id="storeTag">1호점</span><span id="secret" style="padding:10px 4px">●</span></div>
+  <img id="logo" src="logo.webp" alt="부평 셜록홈즈">
+  <div class="board">
+    <h2>🔍 셜록홈즈 쿠지 상품</h2>
+    <div class="prizes" id="prizes"></div>
+    <div class="total" id="total"></div>
+  </div>
+  <button id="drawBtn">쿠지 뽑기!</button>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="hint" id="hint">티켓을 눌러서 뜯어보세요!</div>
+  <div class="stage">
+    <div class="result" id="result"><div class="big" id="rGrade"></div><div class="rname" id="rName"></div></div>
+    <div class="ticket" id="ticket"><div class="half h1"></div><div class="half h2"></div></div>
+  </div>
+  <button id="doneBtn">직원 확인 완료</button>
+</div>
+
+<div class="modal" id="pinModal"><div class="sheet">
+  <h3>직원 확인</h3>
+  <label>비밀번호</label><input id="pinInput" type="password" inputmode="numeric" autocomplete="off">
+  <div class="btns"><button class="main" id="pinOk">열기</button><button id="pinCancel">닫기</button></div>
+</div></div>
+
+<div class="modal" id="staff"><div class="sheet">
+  <h3>직원 설정</h3>
+  <label>이 태블릿 매장</label>
+  <select id="storeSel"><option value="1">부평 1호점</option><option value="2">부평 2호점</option></select>
+  <label>상품 수량 <span class="muted">(남은 수 / 처음 수)</span></label>
+  <div id="editRows"></div>
+  <div class="btns">
+    <button class="main" id="saveCounts">수량 저장</button>
+    <button id="undoBtn">마지막 뽑기 취소</button>
+    <button class="danger" id="resetBtn">처음 수량으로 초기화</button>
+  </div>
+  <label>뽑기 기록</label>
+  <div class="log" id="logBox"></div>
+  <div class="btns"><button id="csvBtn">기록 파일로 저장</button></div>
+  <label>비밀번호 바꾸기</label><input id="newPin" inputmode="numeric" placeholder="새 비밀번호 (숫자)">
+  <div class="btns"><button id="pinSave">비밀번호 저장</button><button class="main" id="staffClose">닫기</button></div>
+  <p class="muted">숨은 메뉴 여는 법: 오른쪽 위 ● 를 5번 빠르게 누르기</p>
+</div></div>
+
+<script>
+// 상품 목록 (등급, 이름, 매장당 기본 수량)
+const PRIZES = [
+  {g:'A', name:'셜키홈키 키링', n:2},
+  {g:'B', name:'키링 + 뱃지 + 스티커', n:2},
+  {g:'C', name:'키링 + 뱃지', n:2},
+  {g:'D', name:'뱃지', n:15},
+  {g:'F', name:'스티커', n:30}, // 임시 수량
+];
+
+// 저장소 (실패해도 앱은 동작)
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
+};
+let shop = store.get('kuji:shop', '1');
+const fresh = () => ({ left: Object.fromEntries(PRIZES.map(p=>[p.g,p.n])), init: Object.fromEntries(PRIZES.map(p=>[p.g,p.n])), log: [] });
+const load = () => store.get('kuji:data:'+shop, null) || fresh();
+let data = load();
+const save = () => store.set('kuji:data:'+shop, data);
+
+const $ = id => document.getElementById(id);
+const nameOf = g => PRIZES.find(p=>p.g===g).name;
+const total = () => PRIZES.reduce((s,p)=>s+(data.left[p.g]||0),0);
+
+function render(){
+  $('storeTag').textContent = '부평 '+shop+'호점';
+  $('prizes').innerHTML = PRIZES.map(p=>{
+    const l = data.left[p.g]||0, i = data.init[p.g]||0;
+    return `<div class="prize g-${p.g} ${l?'':'out'}"><div class="badge">${p.g}</div><div class="pname">${p.g}상 · ${p.name}</div><div class="left">${l?`남은 ${l}<small> / ${i}</small>`:'소진'}</div></div>`;
+  }).join('');
+  const t = total();
+  $('total').textContent = t ? `남은 쿠지 ${t}장` : '모든 쿠지가 소진되었어요';
+  $('drawBtn').disabled = !t;
+  $('drawBtn').textContent = t ? '쿠지 뽑기!' : '소진';
+}
+
+// 남은 수량에 비례해서 뽑기 (종이 쿠지와 같은 방식)
+function pick(){
+  const t = total(); if(!t) return null;
+  const r = new Uint32Array(1); crypto.getRandomValues(r);
+  let x = r[0] % t;
+  for(const p of PRIZES){ const l = data.left[p.g]||0; if(x < l) return p.g; x -= l; }
+  return null;
+}
+
+let current = null;
+$('drawBtn').onclick = () => {
+  const g = pick(); if(!g) return;
+  // 뜯기 전에 미리 빼둠 (새로고침으로 다시 뽑기 방지)
+  data.left[g]--; data.log.push({t:Date.now(), g}); save(); current = g;
+  $('rGrade').textContent = g+'상';
+  $('rName').textContent = nameOf(g);
+  $('ticket').className = 'ticket'; $('doneBtn').classList.remove('on');
+  $('hint').textContent = '티켓을 눌러서 뜯어보세요!'; $('hint').style.animation = '';
+  $('overlay').classList.add('on');
+};
+$('ticket').onclick = () => {
+  const t = $('ticket'); if(t.classList.contains('torn')) return;
+  t.classList.add('shake');
+  setTimeout(()=>{ t.classList.remove('shake'); t.classList.add('torn');
+    $('hint').textContent = current==='A'||current==='B' ? '🎉 축하해요! 🎉' : '당첨!'; $('hint').style.animation='none';
+    if(current==='A'||current==='B') confetti();
+    setTimeout(()=>$('doneBtn').classList.add('on'), 900);
+  }, 400);
+};
+$('doneBtn').onclick = () => { $('overlay').classList.remove('on'); current = null; render(); };
+
+function confetti(){
+  const colors = ['#ff5fa2','#ffcf3f','#38b6ff','#fff','#8a3ee0'];
+  for(let i=0;i<80;i++){
+    const c = document.createElement('div'); c.className='confetti';
+    c.style.left = Math.random()*100+'vw'; c.style.background = colors[i%colors.length];
+    c.style.animationDuration = (2+Math.random()*2)+'s'; c.style.animationDelay = Math.random()*.6+'s';
+    document.body.appendChild(c); setTimeout(()=>c.remove(), 5000);
+  }
+}
+
+// 숨은 직원 메뉴: ● 5번
+let taps = [];
+$('secret').onclick = () => {
+  const now = Date.now(); taps = taps.filter(t=>now-t<3000); taps.push(now);
+  if(taps.length>=5){ taps=[]; $('pinInput').value=''; $('pinModal').classList.add('on'); setTimeout(()=>$('pinInput').focus(),50); }
+};
+$('pinCancel').onclick = () => $('pinModal').classList.remove('on');
+$('pinOk').onclick = () => {
+  if($('pinInput').value === store.get('kuji:pin','0000')){ $('pinModal').classList.remove('on'); openStaff(); }
+  else { $('pinInput').value=''; alert('비밀번호가 틀렸어요'); }
+};
+
+function openStaff(){
+  $('storeSel').value = shop;
+  $('editRows').innerHTML = '<div class="row muted"><span>등급</span><span>상품</span><span>남은 수</span><span>처음 수</span></div>' +
+    PRIZES.map(p=>`<div class="row"><b>${p.g}</b><span>${p.name}</span><input type="number" min="0" id="l_${p.g}" value="${data.left[p.g]||0}"><input type="number" min="0" id="i_${p.g}" value="${data.init[p.g]||0}"></div>`).join('');
+  const fmt = t => new Date(t).toLocaleString('ko-KR');
+  $('logBox').innerHTML = data.log.length ? data.log.slice().reverse().map(e=>`${fmt(e.t)} — ${e.g}상 ${nameOf(e.g)}`).join('<br>') : '아직 기록이 없어요';
+  $('staff').classList.add('on');
+}
+$('storeSel').onchange = e => { shop = e.target.value; store.set('kuji:shop', shop); data = load(); render(); openStaff(); };
+$('saveCounts').onclick = () => {
+  PRIZES.forEach(p=>{ data.left[p.g] = Math.max(0, +$('l_'+p.g).value||0); data.init[p.g] = Math.max(0, +$('i_'+p.g).value||0); });
+  save(); render(); alert('저장했어요');
+};
+$('undoBtn').onclick = () => {
+  const e = data.log[data.log.length-1]; if(!e) return alert('취소할 기록이 없어요');
+  if(!confirm(`마지막 뽑기(${e.g}상)를 취소하고 수량을 되돌릴까요?`)) return;
+  data.log.pop(); data.left[e.g]++; save(); render(); openStaff();
+};
+$('resetBtn').onclick = () => {
+  if(!confirm('남은 수량을 처음 수량으로 되돌리고 기록을 지울까요? 되돌릴 수 없어요.')) return;
+  data.left = {...data.init}; data.log = []; save(); render(); openStaff();
+};
+$('csvBtn').onclick = () => {
+  const rows = [['시간','등급','상품']].concat(data.log.map(e=>[new Date(e.t).toLocaleString('ko-KR'), e.g+'상', nameOf(e.g)]));
+  const csv = '﻿' + rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `쿠지기록_${shop}호점_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+};
+$('pinSave').onclick = () => {
+  const v = $('newPin').value.trim(); if(!/^\d{4,8}$/.test(v)) return alert('숫자 4~8자리로 넣어주세요');
+  store.set('kuji:pin', v); $('newPin').value=''; alert('비밀번호를 바꿨어요');
+};
+$('staffClose').onclick = () => $('staff').classList.remove('on');
+
+// 화면 꺼짐 방지 (지원하는 기기만)
+async function keepAwake(){ try{ await navigator.wakeLock?.request('screen') }catch(e){} }
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') keepAwake() });
+keepAwake();
+
+// 인터넷 끊겨도 동작하도록
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+render();
+</script>
+</body>
+</html>
